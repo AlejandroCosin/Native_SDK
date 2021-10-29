@@ -116,13 +116,29 @@ public:
 	void recordCommandBuffer();
 };
 
+#define InitVkStruct(vkStruct, sType) InitVulkanStruct(&vkStruct, sType)
+#define InitVkStructNextPtr(vkStruct, sType, pNext) InitVulkanStruct(&vkStruct, sType, pNext)
+
+inline void InitVulkanStruct(void* vkStruct, VkStructureType sType, void* pNext = nullptr)
+{
+	struct VkStruct
+	{
+		VkStructureType sType;
+		void* pNext;
+	};
+	const VkStruct vkSt = { sType, pNext };
+	assert(vkStruct && "NULL Pointer");
+	memcpy(vkStruct, &vkSt, sizeof(vkSt));
+}
+
+pvrvk::ImageView texBase;
+pvrvk::ImageView texNormalMap;
+
 /// <summary>Loads the textures required for this training course.</summary>
 /// <returns>Return true if no error occurred.</returns>
 void VulkanBumpmap::createImageSamplerDescriptor(pvrvk::CommandBuffer& imageUploadCmd)
 {
 	pvrvk::Device& device = _deviceResources->device;
-	pvrvk::ImageView texBase;
-	pvrvk::ImageView texNormalMap;
 
 	// create the bilinear sampler
 	pvrvk::SamplerCreateInfo samplerInfo;
@@ -367,6 +383,17 @@ pvr::Result VulkanBumpmap::initView()
 	_deviceResources->queue->waitIdle();
 
 	pvr::utils::endQueueDebugLabel(_deviceResources->queue);
+
+	Log(LogLevel::Information, "PRE-vkGetImageMemoryRequirements2 call");
+
+	const VkImageMemoryRequirementsInfo2 imageRequirementsInfo = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2, NULL, texBase->getImage()->getVkHandle() };
+	VkMemoryDedicatedRequirements dedicatedRequirements;
+	InitVkStructNextPtr(dedicatedRequirements, VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS_KHR, nullptr);
+	VkMemoryRequirements2 memoryRequirements2;
+	InitVkStructNextPtr(memoryRequirements2, VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2, &dedicatedRequirements);
+	_deviceResources->device->getVkBindings().vkGetImageMemoryRequirements2(_deviceResources->device->getVkHandle(), &imageRequirementsInfo, &memoryRequirements2);
+
+	Log(LogLevel::Information, "POST-vkGetImageMemoryRequirements2 call");
 
 	//  Initialize UIRenderer
 	_deviceResources->uiRenderer.init(getWidth(), getHeight(), isFullScreen(), _deviceResources->onScreenFramebuffer[0]->getRenderPass(), 0,
