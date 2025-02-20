@@ -164,7 +164,7 @@ The following can be used to build the SDK using system and platform specific de
 
 .. code-block:: bash
 
-	git clone https://github.com/powervr-graphics/Native_SDK.git
+	git clone --recurse-submodules https://github.com/powervr-graphics/Native_SDK.git
 	cd Native_SDK
 	mkdir build
 	cd build
