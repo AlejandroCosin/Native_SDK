@@ -19,7 +19,7 @@ Downloading the repository
 Github
 ~~~~~~
 To create a local git repository use:
-``git clone https://github.com/powervr-graphics/Native_SDK.git``
+``git clone --recurse-submodules https://github.com/powervr-graphics/Native_SDK.git``
 
 Repository Dependencies
 -----------------------
